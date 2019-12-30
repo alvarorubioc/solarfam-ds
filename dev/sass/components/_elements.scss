@@ -2,6 +2,11 @@ html {
 	box-sizing: border-box;
 }
 
+.side-nav {
+  padding: $space-sm;
+  background-color: $color__bg-grey-ligth;
+}
+
 *,
 *:before,
 *:after { /* Inherit box-sizing to make it easier to change the property for components that leverage other behavior; see https://css-tricks.com/inheriting-box-sizing-probably-slightly-better-best-practice/ */
@@ -29,5 +34,3 @@ img {
 figure {
 	margin: 1em 0; /* Extra wide images within figure tags don't overflow the content area. */
 }
-
-@import "tables";

@@ -18,6 +18,7 @@ const	svgmin = require("gulp-svgmin");
 const	svgstore = require ("gulp-svgstore");
 const	cheerio = require ("gulp-cheerio");
 const 	zip = require('gulp-zip');
+const htmlPartial = require('gulp-html-partial');
 
 var onError = function(err)	{
 	console.log("Se ha producido un error: ", err.message);
@@ -31,6 +32,7 @@ const devPaths = {
 	js: './dev/js/',
 	img: './dev/img/',
 	icons: './dev/icons/',
+	src: './dev/src',
 };
 
 const distPaths = {
@@ -38,6 +40,7 @@ const distPaths = {
   	img: './assets/img/',
   	icons: './assets/icons/',
   	fonts: './assets/fonts/',
+  	css: './assets/css/',
   };
 
 // Files to watch
@@ -47,10 +50,11 @@ const watchFiles = {
 	img: './dev/img/**/*.*',
 	icons: './assets/icons/*.svg',
 	fonts: './dev/fonts/',
+	html: './dev/src',
 };
 
 // Browser Sync proxy direction
-const proxySync = 'localhost:3000/' + themeName;
+const proxySync = 'local-host/' + themeName;
 
 
 // Gulp TASK
@@ -60,11 +64,9 @@ gulp.task("sass", function(){
 		.pipe (sourceMaps.init())
 		.pipe (gulpsass())
 		.pipe (autoprefixer("last 3 versions"))
-		.pipe (gulp.dest("."))
 		.pipe (cleanCss({keepSpecialComments: 1}))
 		.pipe (sourceMaps.write("."))
-		.pipe (gulp.dest("."))
-		.pipe(reload({stream:true}));		
+		.pipe (gulp.dest("./"))
 });
 
 
@@ -75,7 +77,7 @@ gulp.task("javascript", function(){
 		.pipe (concat(themeName + '.min.js'))
 		.pipe (uglify())
 		.pipe (gulp.dest(distPaths.js));
-		
+
 });
 
 gulp.task("imagemin", function(){
@@ -86,7 +88,7 @@ gulp.task("imagemin", function(){
 			interlaced: true
 		}))
 		.pipe(gulp.dest(distPaths.img));
-		
+
 });
 
 gulp.task('icons', function () {
@@ -104,30 +106,36 @@ gulp.task('icons', function () {
       parserOptions: { xmlMode: true }
     }))
     .pipe(gulp.dest(distPaths.icons));
-	
+
+});
+
+// Html partials
+gulp.task('html', function () {
+    return gulp.src(devPaths.src + '/*.html')
+        .pipe(htmlPartial({
+            basePath: 'dev/src/partials/'
+        }))
+        .pipe(gulp.dest('.'));
 });
 
 // Browser Sync
 gulp.task('browser-sync', function() {
 	var files = [
-		'**/*.php',
+		'**/*.html',
 		'**/*.{png,jpg,gif,svg}',
-		"wp-content/themes/**/*.css",
-		{
-			match: ["wp-content/themes/**/*.php"],
-			fn:    function (event, file) {
-					/** Custom event handler **/
-			}
-		}
+		"**/*.css",
 	];
 	browserSync.init(files, {
-		proxy: proxySync,
+		server: {
+         baseDir: "C:/local-host/solarfam-ds",
+				 index: "index.html"
+      },
 		liveReload: false,
 		watch: true,
 		open: false,
 		browser: ["google chrome", "firefox"],
 		injectChanges: false
-		
+
 	});
 });
 
@@ -137,9 +145,7 @@ gulp.task('build', function () {
 	return gulp.src([
 	  '*',
 	  './assets/**/*',
-	  './inc/**/*',
-	  './languages/*',
-	  './template-parts/*',
+	  './src/**/*',
 	  '!dev',
 	  '!dist',
 	  '!.gitignore',
@@ -155,14 +161,14 @@ gulp.task('build', function () {
 
 // Gulp watching where magic happen
 gulp.task( 'watch', function() {
- 
+
 	// don't listen to whole js folder, it'll create an infinite loop
 	gulp.watch( watchFiles.js, gulp.parallel('javascript') );
 	gulp.watch( watchFiles.sass, gulp.parallel('sass') );
 	gulp.watch( watchFiles.img, gulp.parallel('imagemin') );
 	gulp.watch( watchFiles.icons, gulp.parallel('icons') );
-   
-  } );
-   
-  gulp.task( 'default', gulp.parallel('watch', 'browser-sync'));
+	gulp.watch( watchFiles.html, gulp.parallel('html') );
 
+  } );
+
+  gulp.task( 'default', gulp.parallel('watch', 'browser-sync'));
